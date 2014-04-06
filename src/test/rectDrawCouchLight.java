@@ -3,13 +3,10 @@ package test;
 import java.awt.Rectangle;
 import java.io.File;
 import java.util.UUID;
-
 import org.lightcouch.CouchDbClient;
 import org.lightcouch.Response;
-
 import javax.swing.*; 
 import javax.swing.filechooser.FileNameExtensionFilter;
-
 import processing.core.PApplet;
 import processing.core.PFont;
 import processing.core.PGraphics;
@@ -26,12 +23,12 @@ public class rectDrawCouchLight extends PApplet {
 
 	PGraphics overlay , settingsGraphics; // rect data drawn to buffer
 	PImage render ,currentImage, settingsPImage; // image drawn from buffer
-
+	private JFileChooser fc = new JFileChooser(); 
 	// for info and UI
 	ControlP5 cP5, tagsControlP5, settingsPanelcpP5;
 	controlP5.Button clearButton, nullFaces;
 	controlP5.Toggle lockButton, settingsButton;
-	controlP5.Textfield imageSeqLoc, frameIntervalcp5;
+	controlP5.Textfield imageSeqLoc, frameIntervalcp5, tvShowTextfield, databaseteTextfield, projectNameTextfield, airdateTextField;
 	boolean validArea = false, //boolean to check if clicked in valid area 
 			lock = true, //boolean to turn of rect drawing behavior
 			settings = true //boolean to show settings panel
@@ -113,9 +110,8 @@ public class rectDrawCouchLight extends PApplet {
 	}
 
 	public void filePicker(){
-		final JFileChooser fc = new JFileChooser(); 
-		FileNameExtensionFilter filter = new FileNameExtensionFilter(
-				"JPG PNG & TIFF Images", "jpg", "tiff", "png");
+		
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("JPG PNG & TIFF Images", "jpg", "tiff", "png");
 
 		File thesisDir = new File("/Volumes/USB_Storage/thesis/dataface_corpus/");
 		fc.setFileFilter(filter);
@@ -139,12 +135,14 @@ public class rectDrawCouchLight extends PApplet {
 					println(lines[i]);  
 					imageSeqLoc.setText(defaultImageURL);
 					currentImage = loadImage(defaultImageURL);
+				
 				} 
 			} 
 		} else { 
 			println("Open command cancelled by user."); 
 			imageSeqLoc.setText(defaultImageURL);
 			currentImage = loadImage(defaultImageURL);
+			
 		}
 	}
 
@@ -174,7 +172,7 @@ public class rectDrawCouchLight extends PApplet {
 	public void incrementImage(String filepath, int incrementNum) { //filepath + file of first item from settings, incrementNumber from settings
 		//take current filename, find current file number, add the incrementnum, load that file
 
-		int fileNumberStart =filepath.lastIndexOf("_");
+		int fileNumberStart = filepath.lastIndexOf("_");
 		int fileNumberEnd = filepath.lastIndexOf(".");
 		int incrementPadding = fileNumberEnd-fileNumberStart - 1;
 		String frameNumberString = frameNumberString(filepath, incrementPadding);
@@ -187,6 +185,7 @@ public class rectDrawCouchLight extends PApplet {
 		println("newFrameInt: "+ newFrameInt,"prefix: " + filePrefixString, "newLeadingZeroString: "+newLeadingZeroString, "extension: "+extension);
 		String _newFrameString = filePrefixString + "_" + newLeadingZeroString + "." + extension;
 		currentFrameString = _newFrameString;
+		imageSeqLoc.setText(currentFrameString);
 		currentImage = loadImage(_newFrameString);
 
 	}
@@ -200,8 +199,8 @@ public class rectDrawCouchLight extends PApplet {
 		settingsGraphics.text("settings", width-300, height/2);
 		settingsGraphics.endDraw();
 		settingsPImage = settingsGraphics.get(0, 0, settingsGraphics.width, settingsGraphics.height);
-
-		Textfield projectNameTextfield = settingsPanelcpP5.addTextfield("Project Name")
+			
+		projectNameTextfield = settingsPanelcpP5.addTextfield("Project Name")
 				.setPosition(100,100)
 				.setSize(500,50)
 				.setFont(pfont)
@@ -211,7 +210,7 @@ public class rectDrawCouchLight extends PApplet {
 				.setValue(projectName)
 				;
 
-		Textfield databaseteTextfield = settingsPanelcpP5.addTextfield("database")
+		databaseteTextfield = settingsPanelcpP5.addTextfield("database")
 				.setPosition(100,200)
 				.setSize(500,50)
 				.setFont(pfont)
@@ -219,7 +218,7 @@ public class rectDrawCouchLight extends PApplet {
 				.setId(-11)
 				.setValue(database)
 				;
-		Textfield tvShowtTextfield = settingsPanelcpP5.addTextfield("Show Name")
+		tvShowTextfield = settingsPanelcpP5.addTextfield("Show Name")
 				.setPosition(100,300)
 				.setSize(500,50)
 				.setFont(pfont)
@@ -227,7 +226,8 @@ public class rectDrawCouchLight extends PApplet {
 				.setId(-12)
 				.setValue(showName)
 				;
-		settingsPanelcpP5.addTextfield("air date")
+		
+		airdateTextField = settingsPanelcpP5.addTextfield("air date")
 		.setPosition(100,400)
 		.setSize(500,50)
 		.setFont(pfont)
@@ -243,6 +243,14 @@ public class rectDrawCouchLight extends PApplet {
 		.setColor(color(255))
 		.setId(-14)
 		;
+		
+		controlP5.Button imageSeqButton = settingsPanelcpP5.addButton("Load Image Sequence")
+		.setPosition(100,600)
+		.setSize(200, 50)
+		.setId(-16)
+		;
+		
+		imageSeqButton.getCaptionLabel().setFont(pfont).setSize(14).setPaddingX(10);
 
 		frameIntervalcp5 = settingsPanelcpP5.addTextfield("Frame Interval")
 		.setPosition(700,100)
@@ -259,7 +267,7 @@ public class rectDrawCouchLight extends PApplet {
 		.setSize(100,50)
 		.setFont(pfont)
 		.setColor(color(255))
-		.setId(-16)
+		.setId(-17)
 		.setInputFilter(ControlP5.INTEGER)
 		.setValue(frameStart)
 		.setText("0")
@@ -331,11 +339,10 @@ public class rectDrawCouchLight extends PApplet {
 		;		
 	}
 
-
 	public void controlEvent(ControlEvent theEvent) {
 		//println("got a control event from controller with id "+theEvent.getController().getId());
 
-		if (theEvent.isFrom(settingsPanelcpP5.getController(""))) {
+		if (theEvent.isFrom(settingsPanelcpP5.getController("Save Data"))) {
 			println("Save Data is triggered...");
 		}
 		int incrementNum = parseInt(settingsPanelcpP5.get(Textfield.class , "Frame Interval").getText());
@@ -343,11 +350,13 @@ public class rectDrawCouchLight extends PApplet {
 		
 		
 		case(0): //send the rect info and tags to database
-		String filepath = settingsPanelcpP5.get(Textfield.class,"Image Sequence Location").getText();
-		//faceDataToDB();
+		String filepath = imageSeqLoc.getText();
+		faceDataToDB();
 		println("currentFramestring: " + currentFrameString);
-		incrementImage(currentFrameString, incrementNum);
-
+		//incrementImage(currentFrameString, incrementNum);
+		incrementImage(filepath, incrementNum);
+		validArea = false;
+		resetRect();
 		break;
 		case(-2): //clear button
 			validArea = false;
@@ -362,10 +371,40 @@ public class rectDrawCouchLight extends PApplet {
 			//println(theEvent.getController().getStringValue());
 			//println("lock: " + lock);
 		break;
+		case (-16):
+		
+		int returnVal = fc.showOpenDialog(this); 
+
+		if (returnVal == JFileChooser.APPROVE_OPTION) { 
+			File file = fc.getSelectedFile(); 
+
+			if (file.getName().endsWith("jpg") || file.getName().endsWith("jpeg") || file.getName().endsWith("png")) { 
+				// load the image using the given file path
+				currentImage = loadImage(file.getPath());
+				String textfieldString = file.getPath();
+				imageSeqLoc.setText(textfieldString);
+
+			} else { 
+				// just print the contents to the console 
+				// note: loadStrings can take a Java File Object too 
+				String lines[] = loadStrings(file); 
+				for (int i = 0; i < lines.length; i++) { 
+					println(lines[i]);  
+					//imageSeqLoc.setText(defaultImageURL);
+					currentImage = loadImage(defaultImageURL);
+				} 
+			} 
+		} else { 
+			println("Open command cancelled by user."); 
+			//imageSeqLoc.setText(defaultImageURL);
+			currentImage = loadImage(defaultImageURL);
+
+		}
+		break;
 		}
 	}
 
-	/*	public void faceDataToDB() {
+	public void faceDataToDB() {
 
 			JSONObject slideNumber = new JSONObject();
 			JSONArray faceArray = new JSONArray();
@@ -388,14 +427,19 @@ public class rectDrawCouchLight extends PApplet {
 				//faceArray.setJSONObject(i, rectData);
 				slideNumber.setJSONArray("faces", faceArray);
 				slideNumber.setJSONObject("faces", rectData); 
-
 			}	
 
-			slideNumber.setString("project", projectName);
-			slideNumber.setString("tv_show", tvShow);
-			slideNumber.setString("airdate", airdate);
-			slideNumber.setString("slide#", fileName);
-			slideNumber.setString("imageURL", imageURL);
+			slideNumber.setString("project", projectNameTextfield.getText());
+			slideNumber.setString("tv_show", tvShowTextfield.getText());
+			slideNumber.setString("airdate", airdateTextField.getText());
+
+			String frameNumberString= imageSeqLoc.getText();
+			int last = frameNumberString.lastIndexOf(".");
+			int first = frameNumberString.lastIndexOf("_");
+			//int difference = last - first -1;
+			slideNumber.setString("frame_number", frameNumberString.substring(first, last) );
+
+			slideNumber.setString("imageURL", imageSeqLoc.getText());
 			slideNumber.setInt("img_height", resizeH);
 			slideNumber.setInt("img_width", resizeW);	
 			//	slideNumber.setString("_id", generateUUID());
@@ -410,9 +454,9 @@ public class rectDrawCouchLight extends PApplet {
 			//we get Exception in thread ÒmainÓ org.lightcouch.DocumentConflictException: << Status: 409 (Conflict)
 			}
 		}
-	 */		
+	 		
 
-	/*		public void faceDataToDB() {
+	/*	public void faceDataToDB() {
 
 			JsonObject project = new JsonObject();
 			JsonObject frameData = new JsonObject();
@@ -467,6 +511,7 @@ public class rectDrawCouchLight extends PApplet {
 			}
 		}
 	 */		
+	
 	public void saveData(int theValue) {
 		//println("a button event from saveData: " + theValue);
 		c1 = c2;
@@ -528,7 +573,6 @@ public class rectDrawCouchLight extends PApplet {
 		//	text(textValue, 360,180);
 	}
 
-
 	public void mousePressed() {
 		// grab the first rectangle
 		if (mouseY < height - bottomSpacer) {
@@ -579,10 +623,8 @@ public class rectDrawCouchLight extends PApplet {
 		if (abs(currentRect.width) > smallestArea  && validArea && !lock) {
 			Rectangle _rectangle = currentRect;
 			facesRectangles = (Rectangle[]) append(facesRectangles, _rectangle);
-
-			print("mouseReleased: ");
-			printArray(facesRectangles);
-
+			//print("mouseReleased: ");
+			//printArray(facesRectangles);
 			//Rectangle[] facesRectangles2 = (Rectangle[]) append(facesRectangles, rectangle);
 			//println("rect X: " + rectangle.getX());
 			// println(rectangle.);
