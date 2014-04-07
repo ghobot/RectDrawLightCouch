@@ -37,7 +37,7 @@ public class rectDrawCouchLight extends PApplet {
 	ControlP5 cP5, tagsControlP5, settingsPanelcpP5;
 	controlP5.Button clearButton, nullFaces;
 	controlP5.Toggle lockButton, settingsButton, tagsToggle;
-	controlP5.Textfield imageSeqLoc, frameIntervalcp5, tvShowTextfield, databaseteTextfield, projectNameTextfield, airdateTextField;
+	controlP5.Textfield imageSeqLoc, frameIntervalcp5, tvShowTextfield, stationTextfield, projectNameTextfield, airdateTextField;
 	CheckBox tagsCheckBox;
 	boolean validArea = false, //boolean to check if clicked in valid area 
 			lock = true, //boolean to turn of rect drawing behavior
@@ -216,13 +216,13 @@ public class rectDrawCouchLight extends PApplet {
 				.setText("faces_sampling10")
 				;
 
-		databaseteTextfield = settingsPanelcpP5.addTextfield("database")
+		stationTextfield = settingsPanelcpP5.addTextfield("station")
 				.setPosition(100,200)
 				.setSize(500,50)
 				.setFont(pfont)
 				.setColor(color(255))
 				.setId(-11)
-				.setValue(database)
+				.setText("cbs")
 				;
 		tvShowTextfield = settingsPanelcpP5.addTextfield("Show Name")
 				.setPosition(100,300)
@@ -433,6 +433,7 @@ public class rectDrawCouchLight extends PApplet {
 			frameData.addProperty("project", projectNameTextfield.getText());
 			frameData.addProperty("tv_show", tvShowTextfield.getText());
 			frameData.addProperty("airdate", airdateTextField.getText());
+			frameData.addProperty("station", stationTextfield.getText());
 			
 			String frameNumberString= imageSeqLoc.getText();
 			int last = frameNumberString.lastIndexOf(".");
@@ -450,7 +451,10 @@ public class rectDrawCouchLight extends PApplet {
 					float rectY = facesRectangles[i].y;
 					float rectWidth = abs(facesRectangles[i].width);
 					float rectHeight = abs(facesRectangles[i].height);
-					String tags = tagsControlP5.get(Textfield.class,"tags "+i).getText();	
+					String _tags = "";
+					if(tags){
+						_tags = tagsControlP5.get(Textfield.class,"tags "+i).getText();
+					}
 					JsonObject rectData = new JsonObject();
 					
 					rectData.addProperty("face_id", i);
@@ -458,7 +462,7 @@ public class rectDrawCouchLight extends PApplet {
 					rectData.addProperty("y", rectY);
 					rectData.addProperty("width", rectWidth);
 					rectData.addProperty("height", rectHeight);
-					rectData.addProperty("tags", tags);
+					rectData.addProperty("tags", _tags);
 	
 					facesArray.add(rectData);
 				}	
