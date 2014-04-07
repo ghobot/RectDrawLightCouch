@@ -2,18 +2,27 @@ package test;
 
 import java.awt.Rectangle;
 import java.io.File;
-import java.util.UUID;
+
+import javax.swing.JFileChooser;
+import javax.swing.UIManager;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import org.lightcouch.CouchDbClient;
 import org.lightcouch.Response;
-import javax.swing.*; 
-import javax.swing.filechooser.FileNameExtensionFilter;
+
 import processing.core.PApplet;
 import processing.core.PFont;
 import processing.core.PGraphics;
 import processing.core.PImage;
-import processing.data.JSONArray;
-import processing.data.JSONObject;
-import controlP5.*;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
+import controlP5.CheckBox;
+import controlP5.ControlEvent;
+import controlP5.ControlFont;
+import controlP5.ControlP5;
+import controlP5.Textfield;
 
 public class rectDrawCouchLight extends PApplet {
 
@@ -27,11 +36,13 @@ public class rectDrawCouchLight extends PApplet {
 	// for info and UI
 	ControlP5 cP5, tagsControlP5, settingsPanelcpP5;
 	controlP5.Button clearButton, nullFaces;
-	controlP5.Toggle lockButton, settingsButton;
+	controlP5.Toggle lockButton, settingsButton, tagsToggle;
 	controlP5.Textfield imageSeqLoc, frameIntervalcp5, tvShowTextfield, databaseteTextfield, projectNameTextfield, airdateTextField;
+	CheckBox tagsCheckBox;
 	boolean validArea = false, //boolean to check if clicked in valid area 
 			lock = true, //boolean to turn of rect drawing behavior
-			settings = true //boolean to show settings panel
+			settings = true, //boolean to show settings panel
+			tags=false
 			; 
 	File [] fileNames;
 	String fileName = "", projectName = "",  imageURL, defaultImageURL = "/Volumes/Storage/ITP/Classes/09 spring 2013/left_behind/src/faces/test/cheerios023 copy.png", textValue = "", showName="",  airdate="", tvShowString="" ,database = "", currentFrameString="";
@@ -87,7 +98,7 @@ public class rectDrawCouchLight extends PApplet {
 
 		textFont(font);			
 		textSize(25);
-		text(frameNum, 10 ,height-75);
+		text(frameNumberInt(imageSeqLoc.getText(), 4), 10 ,height-75);
 		if (lock) text("LOCKED", width - 5*buttonWidth, height - 15);
 		popMatrix();
 		pushMatrix();
@@ -120,13 +131,11 @@ public class rectDrawCouchLight extends PApplet {
 
 		if (returnVal == JFileChooser.APPROVE_OPTION) { 
 			File file = fc.getSelectedFile(); 
-
 			if (file.getName().endsWith("jpg") || file.getName().endsWith("jpeg") || file.getName().endsWith("png")) { 
 				// load the image using the given file path
 				currentImage = loadImage(file.getPath());
 				String textfieldString = file.getPath();
-				imageSeqLoc.setText(textfieldString);
-				
+				imageSeqLoc.setText(textfieldString);				
 			} else { 
 				// just print the contents to the console 
 				// note: loadStrings can take a Java File Object too 
@@ -134,15 +143,13 @@ public class rectDrawCouchLight extends PApplet {
 				for (int i = 0; i < lines.length; i++) { 
 					println(lines[i]);  
 					imageSeqLoc.setText(defaultImageURL);
-					currentImage = loadImage(defaultImageURL);
-				
+					currentImage = loadImage(defaultImageURL);				
 				} 
 			} 
 		} else { 
 			println("Open command cancelled by user."); 
 			imageSeqLoc.setText(defaultImageURL);
-			currentImage = loadImage(defaultImageURL);
-			
+			currentImage = loadImage(defaultImageURL);			
 		}
 	}
 
@@ -187,7 +194,6 @@ public class rectDrawCouchLight extends PApplet {
 		currentFrameString = _newFrameString;
 		imageSeqLoc.setText(currentFrameString);
 		currentImage = loadImage(_newFrameString);
-
 	}
 
 	public void settingsPanel(){
@@ -206,8 +212,8 @@ public class rectDrawCouchLight extends PApplet {
 				.setFont(pfont)
 				.setFocus(true)
 				.setColor(color(255))
-				.setId(-10)
-				.setValue(projectName)
+				.setId(-10)				
+				.setText("faces_sampling10")
 				;
 
 		databaseteTextfield = settingsPanelcpP5.addTextfield("database")
@@ -224,7 +230,7 @@ public class rectDrawCouchLight extends PApplet {
 				.setFont(pfont)
 				.setColor(color(255))
 				.setId(-12)
-				.setValue(showName)
+				.setText("the_big_bang_theory")
 				;
 		
 		airdateTextField = settingsPanelcpP5.addTextfield("air date")
@@ -261,7 +267,7 @@ public class rectDrawCouchLight extends PApplet {
 		.setInputFilter(ControlP5.INTEGER)
 		.setText("10")
 		;
-
+		
 		settingsPanelcpP5.addTextfield("Frame Start")
 		.setPosition(700,200)
 		.setSize(100,50)
@@ -272,6 +278,14 @@ public class rectDrawCouchLight extends PApplet {
 		.setValue(frameStart)
 		.setText("0")
 		;
+	
+		tagsToggle= settingsPanelcpP5.addToggle("tags")
+				.setPosition(700,300 )
+				.setSize(25,25)
+				.setId(-4)
+				.setColorBackground(color(125))
+				.setId(-20)
+		    ;
 	}
 
 	public void controls() {
@@ -345,35 +359,37 @@ public class rectDrawCouchLight extends PApplet {
 		if (theEvent.isFrom(settingsPanelcpP5.getController("Save Data"))) {
 			println("Save Data is triggered...");
 		}
+
 		int incrementNum = parseInt(settingsPanelcpP5.get(Textfield.class , "Frame Interval").getText());
+		
 		switch(theEvent.getController().getId()) {
 		
-		
 		case(0): //send the rect info and tags to database
-		String filepath = imageSeqLoc.getText();
-		faceDataToDB();
-		println("currentFramestring: " + currentFrameString);
-		//incrementImage(currentFrameString, incrementNum);
-		incrementImage(filepath, incrementNum);
-		validArea = false;
+			String filepath = imageSeqLoc.getText();
+			faceDataToDB();
+			incrementImage(filepath, incrementNum);
+			validArea = false;
 		resetRect();
 		break;
 		case(-2): //clear button
 			validArea = false;
-		resetRect();
+			resetRect();
 		break;
 		case(-3): //submit null faces //advance to next image
-//			JSONObject nullFaces = new JSONObject();
-//		nullFaces.setJSONObject("faces", null);	
+			nullDataToDB();
+			resetRect();
 		incrementImage(currentFrameString, incrementNum);
 		break;
-		case(-4):
-			//println(theEvent.getController().getStringValue());
-			//println("lock: " + lock);
+		case(-20):
+//			int tagsOn = (int)tagsToggle.getArrayValue()[0];
+//			if(tagsOn==1) {
+//				tags=true;
+//				} else {
+//					tags=false;
+//				}
 		break;
-		case (-16):
-		
-		int returnVal = fc.showOpenDialog(this); 
+		case (-16):		
+			int returnVal = fc.showOpenDialog(this); 
 
 		if (returnVal == JFileChooser.APPROVE_OPTION) { 
 			File file = fc.getSelectedFile(); 
@@ -396,112 +412,69 @@ public class rectDrawCouchLight extends PApplet {
 			} 
 		} else { 
 			println("Open command cancelled by user."); 
-			//imageSeqLoc.setText(defaultImageURL);
 			currentImage = loadImage(defaultImageURL);
-
 		}
 		break;
 		}
 	}
 
+	
+	public void nullDataToDB() {
+		JsonObject nullFaces = new JsonObject();
+		nullFaces.add("faces", null);
+	}
+	
 	public void faceDataToDB() {
-
-			JSONObject slideNumber = new JSONObject();
-			JSONArray faceArray = new JSONArray();
-
-			for (int i = 0; i < facesRectangles.length; i++) {
-				// gather all the rect data					
-				float rectX = facesRectangles[i].x;
-				float rectY = facesRectangles[i].y;
-				float rectWidth = abs(facesRectangles[i].width);
-				float rectHeight = abs(facesRectangles[i].height);
-				String tags = tagsControlP5.get(Textfield.class,"tags "+i).getText();	
-				JSONObject rectData = new JSONObject();
-				rectData.setInt("face_id", i);
-				rectData.setFloat("x", rectX);
-				rectData.setFloat("y", rectY);
-				rectData.setFloat("width", rectWidth);
-				rectData.setFloat("height", rectHeight);
-				rectData.setString("tags", tags);
-
-				//faceArray.setJSONObject(i, rectData);
-				slideNumber.setJSONArray("faces", faceArray);
-				slideNumber.setJSONObject("faces", rectData); 
-			}	
-
-			slideNumber.setString("project", projectNameTextfield.getText());
-			slideNumber.setString("tv_show", tvShowTextfield.getText());
-			slideNumber.setString("airdate", airdateTextField.getText());
-
-			String frameNumberString= imageSeqLoc.getText();
-			int last = frameNumberString.lastIndexOf(".");
-			int first = frameNumberString.lastIndexOf("_");
-			//int difference = last - first -1;
-			slideNumber.setString("frame_number", frameNumberString.substring(first, last) );
-
-			slideNumber.setString("imageURL", imageSeqLoc.getText());
-			slideNumber.setInt("img_height", resizeH);
-			slideNumber.setInt("img_width", resizeW);	
-			//	slideNumber.setString("_id", generateUUID());
-			try
-			{
-			resp = dbClient.save(slideNumber);
-
-			}
-			catch(org.lightcouch.DocumentConflictException e)
-			{
-			//if we insert something that already exists
-			//we get Exception in thread ÒmainÓ org.lightcouch.DocumentConflictException: << Status: 409 (Conflict)
-			}
-		}
-	 		
-
-	/*	public void faceDataToDB() {
 
 			JsonObject project = new JsonObject();
 			JsonObject frameData = new JsonObject();
-			JsonObject facesJsonObject = new JsonObject();
+			JsonArray facesArray = new JsonArray();
 
-			frameData.addProperty("airdate", airdate);
-			frameData.addProperty("show_name", showName);
-			frameData.addProperty("img_width", 1280);
-			frameData.addProperty("img_height", 720);
-			frameData.addProperty("project_name", projectName);
-			frameData.addProperty("frame#", frameNum);
-			frameData.add("faces", facesJsonObject);
-
-			for (int i = 0; i < facesRectangles.length; i++) {
+			frameData.addProperty("project", projectNameTextfield.getText());
+			frameData.addProperty("tv_show", tvShowTextfield.getText());
+			frameData.addProperty("airdate", airdateTextField.getText());
+			
+			String frameNumberString= imageSeqLoc.getText();
+			int last = frameNumberString.lastIndexOf(".");
+			int first = frameNumberString.lastIndexOf("_");			
+			frameData.addProperty("frame_number", frameNumberString.substring(first, last) );
+			frameData.addProperty("imageURL", imageSeqLoc.getText());
+			frameData.addProperty("frame_interval", frameIntervalcp5.getText());
+			frameData.addProperty("img_height", resizeH);
+			frameData.addProperty("img_width", resizeW);
+			
+			if (facesRectangles.length>0){
+				for (int i = 0; i < facesRectangles.length; i++) {
 				// gather all the rect data					
-				float rectX = facesRectangles[i].x;
-				float rectY = facesRectangles[i].y;
-				float rectWidth = abs(facesRectangles[i].width);
-				float rectHeight = abs(facesRectangles[i].height);
-				String tags = tagsControlP5.get(Textfield.class,"tags "+i).getText();	
-				JSONObject rectData = new JSONObject();
-				rectData.setInt("face_id", i);
-				rectData.setFloat("x", rectX);
-				rectData.setFloat("y", rectY);
-				rectData.setFloat("width", rectWidth);
-				rectData.setFloat("height", rectHeight);
-				rectData.setString("tags", tags);
-
-				//faceArray.setJSONObject(i, rectData);
-				slideNumber.setJSONArray("faces", faceArray);
-				slideNumber.setJSONObject("faces", rectData); 
-
-			}	
-
-			slideNumber.setString("project", projectName);
-			slideNumber.setString("tv_show", showName);
-			slideNumber.setString("airdate", airdate);
-			slideNumber.setString("slide#", fileName);
-			slideNumber.setString("imageURL", imageURL);
-			slideNumber.setInt("img_height", resizeH);
-			slideNumber.setInt("img_width", resizeW);	
-			//	slideNumber.setString("_id", generateUUID());
+					float rectX = facesRectangles[i].x;
+					float rectY = facesRectangles[i].y;
+					float rectWidth = abs(facesRectangles[i].width);
+					float rectHeight = abs(facesRectangles[i].height);
+					String tags = tagsControlP5.get(Textfield.class,"tags "+i).getText();	
+					JsonObject rectData = new JsonObject();
+					
+					rectData.addProperty("face_id", i);
+					rectData.addProperty("x", rectX);
+					rectData.addProperty("y", rectY);
+					rectData.addProperty("width", rectWidth);
+					rectData.addProperty("height", rectHeight);
+					rectData.addProperty("tags", tags);
+	
+					facesArray.add(rectData);
+				}	
+			} 
+			
+			if(facesRectangles.length<1){
+				frameData.addProperty("faces", "null");
+			} else {
+				frameData.add("faces", facesArray);
+			}
+			String corpus = "corpus_1_fps";			
+			project.add(corpus , frameData);
+			
 			try
 			{
-			resp = dbClient.save(slideNumber);
+			resp = dbClient.save(project);
 
 			}
 			catch(org.lightcouch.DocumentConflictException e)
@@ -510,10 +483,8 @@ public class rectDrawCouchLight extends PApplet {
 			//we get Exception in thread ÒmainÓ org.lightcouch.DocumentConflictException: << Status: 409 (Conflict)
 			}
 		}
-	 */		
-	
+	 			
 	public void saveData(int theValue) {
-		//println("a button event from saveData: " + theValue);
 		c1 = c2;
 		c2 = color(0, 160, 100);
 	}
@@ -531,7 +502,6 @@ public class rectDrawCouchLight extends PApplet {
 			}
 			overlay.background(0,0);
 			overlay.endDraw();
-			//println("number of tags: " + tagCounter);
 			render = overlay.get(0, 0, overlay.width, overlay.height);
 			for (int i = 0; i < tagCounter; i++) {
 				tagsControlP5.remove("tags " + i);
@@ -548,11 +518,9 @@ public class rectDrawCouchLight extends PApplet {
 			overlay.strokeWeight(3);
 			overlay.rect(facesRectangles[i].x, facesRectangles[i].y,
 					facesRectangles[i].width, facesRectangles[i].height);
-
 		}
 		overlay.endDraw();
 		render = overlay.get(0, 0, overlay.width, overlay.height);
-
 	}
 
 	public void addTags(float posX, float posY){
@@ -569,8 +537,6 @@ public class rectDrawCouchLight extends PApplet {
 		tagCounter++;
 		background(0);
 		fill(255);
-		//	text(cP5.get(Textfield.class,"input").getText(), 360,130);
-		//	text(textValue, 360,180);
 	}
 
 	public void mousePressed() {
@@ -623,14 +589,9 @@ public class rectDrawCouchLight extends PApplet {
 		if (abs(currentRect.width) > smallestArea  && validArea && !lock) {
 			Rectangle _rectangle = currentRect;
 			facesRectangles = (Rectangle[]) append(facesRectangles, _rectangle);
-			//print("mouseReleased: ");
-			//printArray(facesRectangles);
-			//Rectangle[] facesRectangles2 = (Rectangle[]) append(facesRectangles, rectangle);
-			//println("rect X: " + rectangle.getX());
-			// println(rectangle.);
 
 			overlayDraw(); // update rect buffered image
-			addTags(x1, y1);
+			if(tags)addTags(x1, y1);
 			x2 = 0; // reset size of square
 			y2 = 0;
 			//printArray(facesRectangles);
@@ -639,10 +600,6 @@ public class rectDrawCouchLight extends PApplet {
 
 	public void resetRect() {
 		overlayDraw(true);
-	}
-
-	private static String generateUUID() { 
-		return UUID.randomUUID().toString().replace("-", "");
 	}
 }
 
