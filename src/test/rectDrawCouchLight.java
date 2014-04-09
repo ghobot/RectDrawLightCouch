@@ -1,3 +1,10 @@
+/* This is a tool to facilitate face or object detection done by hand by a human. 
+ * A user can draw a rectangle on the canvas around a target object. 
+ * The rectangle data for that frame (location, width, height) is saved to a CouchDB database
+ * Features include: Canvas lock, Sampling interval of  sequence, tags per rectangle, settings panel
+ * 
+ * 
+ * */
 package test;
 
 import java.awt.Rectangle;
@@ -7,6 +14,7 @@ import javax.swing.JFileChooser;
 import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.lightcouch.CouchDbClient;
 import org.lightcouch.Response;
 
@@ -28,7 +36,7 @@ public class rectDrawCouchLight extends PApplet {
 
 	Rectangle currentRect;
 	Rectangle[] facesRectangles = new Rectangle[0];
-	int x1, y1, x2, y2, c1, c2, frameNum=0, frameInterval = 0, frameStart = 0, smallestArea = 50, bottomSpacer = 50, white = color(255), tagCounter = 0, buttonWidth = 200, resizeW = 1280, resizeH = 720; // smallest size of dragged rect; // mouse position data
+	int x1, y1, x2, y2, c1, c2, imageSeqLength, frameNum=0, frameInterval = 0, frameStart = 0, smallestArea = 50, bottomSpacer = 50, white = color(255), tagCounter = 0, buttonWidth = 200, resizeW = 1280, resizeH = 720; // smallest size of dragged rect; // mouse position data
 
 	PGraphics overlay , settingsGraphics; // rect data drawn to buffer
 	PImage render ,currentImage, settingsPImage; // image drawn from buffer
@@ -73,9 +81,7 @@ public class rectDrawCouchLight extends PApplet {
 	}
 
 	public void draw() {
-		PFont font = createFont("arial", 20, true);
 		background(0);
-
 		if (currentImage != null) { 
 			// size the window and show the image 
 			//size(currentImage.width,currentImage.height); 
@@ -83,24 +89,8 @@ public class rectDrawCouchLight extends PApplet {
 			currentImage.resize(resizeW, resizeH);
 			image(currentImage, 0, 0);
 		}
-		projectName = settingsPanelcpP5.get(Textfield.class,"Project Name").getText();
-		showName = settingsPanelcpP5.get(Textfield.class,"Show Name").getText();
-		frameInterval = parseInt(settingsPanelcpP5.get(Textfield.class , "Frame Interval").getText());
-		//bottom ui
-		pushMatrix();
-		noStroke();
-		fill(40);
-		rect(0, height - bottomSpacer, width, height);
-		fill(255);
-		textSize(12);
-		text(projectName+" | "+ showName, 10, height - 20);
-		text(parseInt(frameInterval), 10, height-60);
-
-		textFont(font);			
-		textSize(25);
-		text(frameNumberInt(imageSeqLoc.getText(), 4), 10 ,height-75);
-		if (lock) text("LOCKED", width - 5*buttonWidth, height - 15);
-		popMatrix();
+		
+		dataUI();
 		pushMatrix();
 		image(render, 0, 0); //rect overlay
 		popMatrix();
@@ -113,17 +103,43 @@ public class rectDrawCouchLight extends PApplet {
 			lock = true;
 		} else {
 			settingsPanelcpP5.hide();
+			projectNameTextfield.setFocus(false);
+			tvShowTextfield.setFocus(false);
+			stationTextfield.setFocus(false);
+			airdateTextField.setFocus(false);
+			imageSeqLoc.setFocus(false);
+			frameIntervalcp5.setFocus(false);
 		}
+	}
+
+	public void dataUI() {
+		//bottom ui
+		PFont font = createFont("arial", 20, true);
+		projectName = settingsPanelcpP5.get(Textfield.class,"Project Name").getText();
+		showName = settingsPanelcpP5.get(Textfield.class,"Show Name").getText();
+		frameInterval = parseInt(settingsPanelcpP5.get(Textfield.class , "Frame Interval").getText());
+		pushMatrix();
+		noStroke();
+		fill(40);
+		rect(0, height - bottomSpacer, width, height);
+		fill(255);
+		textSize(12);
+		text(projectName+" | "+ showName, 10, height - 20);
+		text(parseInt(frameInterval), 10, height-60);
+
+		textFont(font);			
+		textSize(25);
+		text(frameNumberInt(imageSeqLoc.getText(), 4) +" / "+ imageSeqLength, 10 ,height-75);
+		if (lock) text("LOCKED", width - 5*buttonWidth, height - 15);
+		popMatrix();
 	}
 
 	public static void tearDownClass() {
 		dbClient.shutdown();
 	}
 
-	public void filePicker(){
-		
+	public void filePicker(){	
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("JPG PNG & TIFF Images", "jpg", "tiff", "png");
-
 		File thesisDir = new File("/Volumes/USB_Storage/thesis/dataface_corpus/");
 		fc.setFileFilter(filter);
 		fc.setCurrentDirectory(thesisDir);
@@ -135,7 +151,8 @@ public class rectDrawCouchLight extends PApplet {
 				// load the image using the given file path
 				currentImage = loadImage(file.getPath());
 				String textfieldString = file.getPath();
-				imageSeqLoc.setText(textfieldString);				
+				imageSeqLoc.setText(textfieldString);	
+				thread("imageSeqLength");	
 			} else { 
 				// just print the contents to the console 
 				// note: loadStrings can take a Java File Object too 
@@ -195,6 +212,8 @@ public class rectDrawCouchLight extends PApplet {
 		imageSeqLoc.setText(currentFrameString);
 		currentImage = loadImage(_newFrameString);
 	}
+	
+	
 
 	public void settingsPanel(){
 		//draw settings fields to buffer
@@ -369,7 +388,7 @@ public class rectDrawCouchLight extends PApplet {
 			faceDataToDB();
 			incrementImage(filepath, incrementNum);
 			validArea = false;
-		resetRect();
+			resetRect();
 		break;
 		case(-2): //clear button
 			validArea = false;
@@ -424,12 +443,18 @@ public class rectDrawCouchLight extends PApplet {
 		nullFaces.add("faces", null);
 	}
 	
+	public void imageSeqLength(){
+		int count = new File(imageSeqLoc.getText()).list().length;
+		imageSeqLength = count;
+		println("imageSeqLength: " + imageSeqLength);
+	}
+	
 	public void faceDataToDB() {
 
-			JsonObject project = new JsonObject();
 			JsonObject frameData = new JsonObject();
 			JsonArray facesArray = new JsonArray();
-
+			String corpus = "corpus_1_fps";	
+			frameData.addProperty("corpus", corpus);
 			frameData.addProperty("project", projectNameTextfield.getText());
 			frameData.addProperty("tv_show", tvShowTextfield.getText());
 			frameData.addProperty("airdate", airdateTextField.getText());
@@ -469,16 +494,14 @@ public class rectDrawCouchLight extends PApplet {
 			} 
 			
 			if(facesRectangles.length<1){
-				frameData.addProperty("faces", "null");
+				frameData.add("faces", null);
 			} else {
 				frameData.add("faces", facesArray);
 			}
-			String corpus = "corpus_1_fps";			
-			project.add(corpus , frameData);
 			
 			try
 			{
-			resp = dbClient.save(project);
+			resp = dbClient.save(frameData);
 
 			}
 			catch(org.lightcouch.DocumentConflictException e)
@@ -523,8 +546,36 @@ public class rectDrawCouchLight extends PApplet {
 			overlay.rect(facesRectangles[i].x, facesRectangles[i].y,
 					facesRectangles[i].width, facesRectangles[i].height);
 		}
+
 		overlay.endDraw();
 		render = overlay.get(0, 0, overlay.width, overlay.height);
+	}
+	
+	public void removeLastRect() {		
+		int length = facesRectangles.length;
+		if (length >1){
+			printArray(facesRectangles);
+			facesRectangles = ArrayUtils.removeElement(facesRectangles, facesRectangles[length-1]);
+			printArray(facesRectangles);
+			overlay.beginDraw();
+			overlay.background(0,0);
+			for (int i = 0; i < facesRectangles.length; i++) {
+				
+				overlay.noFill();
+				overlay.stroke(0, 255, 0);
+				overlay.strokeWeight(3);
+				overlay.rect(facesRectangles[i].x, facesRectangles[i].y,
+						facesRectangles[i].width, facesRectangles[i].height);
+			}
+
+			overlay.endDraw();
+			render = overlay.get(0, 0, overlay.width, overlay.height);
+	
+			tagsControlP5.remove("tags " + (length-1));
+			tagCounter--;
+		} else {
+			println("try pressing clear to reset the screen");			
+		}
 	}
 
 	public void addTags(float posX, float posY){
@@ -601,7 +652,21 @@ public class rectDrawCouchLight extends PApplet {
 			//printArray(facesRectangles);
 		}
 	}
-
+	
+	public void keyPressed() {
+		if (keyCode== ENTER) {
+			println("saved to DB");
+			cP5.getController("Save Data").update();
+		}	
+		
+		if (key=='z'){		
+			println("delete last rect");	
+			removeLastRect(); 
+		
+			validArea = false;
+		}
+	}
+	
 	public void resetRect() {
 		overlayDraw(true);
 	}
