@@ -10,5 +10,6 @@
 			<attribute name="javadoc_location" value="jar:file:/Volumes/Storage/ITP/Classes/09%20spring%202014/libraries/commons-lang3-3.3.1/commons-lang3-3.3.1-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/opencv"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
