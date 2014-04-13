@@ -30,7 +30,9 @@ public class ExtractFaces extends PApplet{
 			int height = jsonObject.getJSONArray("rows").getJSONObject(i).getJSONArray("value").getJSONObject(j).getInt("height");
 			
 			PImage face = image.get(x, y, width, height);
+			if (counter>589){
 			face.save(sketchPath+"/ouput/image"+String.format("%03d", counter)+".png");
+			}
 			counter++;
 		}
 //		println("x:"+jsonObject.getJSONArray("rows").getJSONObject(i).getJSONArray("value").getJSONObject(0).getInt("x"));
