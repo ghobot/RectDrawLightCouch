@@ -53,7 +53,7 @@ public class CVdraw extends PApplet{
 			cv = new OpenCV(this, currentFrame);
 			cv.loadCascade(OpenCV.CASCADE_FRONTALFACE);  
 		}	
-		frameRate(10);
+		frameRate(1);
 
 	}	
 
@@ -97,6 +97,7 @@ public class CVdraw extends PApplet{
 
 	public void cvDetect() {
 		//scan with openCV
+		currentFrame.resize(resizeW, resizeH);
 		cv.loadImage(currentFrame);
 		faces = cv.detect();
 		pGraphics.beginDraw();
@@ -108,8 +109,9 @@ public class CVdraw extends PApplet{
 		for (int i = 0; i < faces.length; i++) {
 			pGraphics.rect(faces[i].x, faces[i].y, faces[i].width, faces[i].height);
 		}
+		pGraphics.fill(255);
 		pGraphics.textSize(20);
-		pGraphics.text(currentFrameString, 10, height-20);
+		pGraphics.text(currentFrameString, 10, height-20 , 100,100);
 		pGraphics.endDraw();
 		render = pGraphics.get(0, 0, pGraphics.width, pGraphics.height);
 
@@ -127,13 +129,13 @@ public class CVdraw extends PApplet{
 		String search = "network_";	
 		String[] firstSplit = currentFrameString.split(search);
 		
-		String[] projectArray = firstSplit[1].split("/");
-		String station = projectArray[0];
-		String date = projectArray[1];
-		String show = projectArray[2];
+		String[] frameArray = firstSplit[1].split("/");
+		String station = frameArray[0];
+		String date = frameArray[1];
+		String show = frameArray[2];
 		String[] corpusSplit = currentFrameString.split("corpus/");
-		String[] project2Array = corpusSplit[1].split("/");
-		String corpus = project2Array[0];
+		String[] projectArray = corpusSplit[1].split("/");
+		String corpus = projectArray[0];
 		
 		JsonObject frameData = new JsonObject();
 		JsonArray facesArray = new JsonArray();	
@@ -169,7 +171,7 @@ public class CVdraw extends PApplet{
 				rectData.addProperty("width", rectWidth);
 				rectData.addProperty("height", rectHeight);
 				rectData.addProperty("tags", _tags);
-
+				
 				facesArray.add(rectData);
 			}	
 		} 

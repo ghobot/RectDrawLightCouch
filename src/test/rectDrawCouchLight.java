@@ -211,6 +211,7 @@ public class rectDrawCouchLight extends PApplet {
 		currentFrameString = _newFrameString;
 		imageSeqLoc.setText(currentFrameString);
 		currentImage = loadImage(_newFrameString);
+		
 	}
 	
 	
@@ -507,7 +508,7 @@ public class rectDrawCouchLight extends PApplet {
 			catch(org.lightcouch.DocumentConflictException e)
 			{
 			//if we insert something that already exists
-			//we get Exception in thread “main” org.lightcouch.DocumentConflictException: << Status: 409 (Conflict)
+			//we get Exception in thread main org.lightcouch.DocumentConflictException: << Status: 409 (Conflict)
 			}
 		}
 	 			
