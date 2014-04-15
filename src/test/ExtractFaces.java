@@ -9,6 +9,7 @@ import processing.data.JSONObject;
 public class ExtractFaces extends PApplet{
 
 	JSONObject jsonObject = loadJSONObject("http://127.0.0.1:5984/gregturk/_design/faces/_view/cbs");
+	
 	String path;
 	int x, y, rectW, rectH;
 	int counter = 0;

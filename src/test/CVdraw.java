@@ -53,7 +53,7 @@ public class CVdraw extends PApplet{
 			cv = new OpenCV(this, currentFrame);
 			cv.loadCascade(OpenCV.CASCADE_FRONTALFACE);  
 		}	
-		frameRate(1);
+		frameRate(10);
 
 	}	
 
@@ -111,7 +111,8 @@ public class CVdraw extends PApplet{
 		}
 		pGraphics.fill(255);
 		pGraphics.textSize(20);
-		pGraphics.text(currentFrameString, 10, height-20 , 100,100);
+		String[] frameNameString= currentFrameString.split("/");		
+		pGraphics.text(frameNameString[9], 10, height-40);
 		pGraphics.endDraw();
 		render = pGraphics.get(0, 0, pGraphics.width, pGraphics.height);
 
