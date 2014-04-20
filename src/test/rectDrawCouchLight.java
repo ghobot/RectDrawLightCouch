@@ -140,7 +140,8 @@ public class rectDrawCouchLight extends PApplet {
 
 	public void filePicker(){	
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("JPG PNG & TIFF Images", "jpg", "tiff", "png");
-		File thesisDir = new File("/Volumes/USB_Storage/thesis/dataface_corpus/");
+		//File thesisDir = new File("/Volumes/USB_Storage/thesis/dataface_corpus/");
+		File thesisDir = new File("/Volumes/My Book for Mac/thesis/dataface_corpus/1_frame_per_second/");
 		fc.setFileFilter(filter);
 		fc.setCurrentDirectory(thesisDir);
 		int returnVal = fc.showOpenDialog(this); 
