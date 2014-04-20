@@ -20,7 +20,11 @@ public class ExtractFaces extends PApplet{
 		println("url:"+jsonObject.getJSONArray("rows").getJSONObject(i).getString("key"));
 		
 		String url  = jsonObject.getJSONArray("rows").getJSONObject(i).getString("key");
-		PImage image = loadImage(url);
+		String[] urlArray= url.split("/");
+		String volume = "/Volumes/My Book for Mac/";
+		String nestedArchive = urlArray[3]+"/"+urlArray[4]+"/"+urlArray[5]+"/"+urlArray[6]+"/"+urlArray[7]+"/"+urlArray[8]+"/"+urlArray[9];
+		String fileLocation = volume + nestedArchive;
+		PImage image = loadImage(fileLocation);
 		image.resize(1280, 720);
 		int faces = jsonObject.getJSONArray("rows").getJSONObject(i).getJSONArray("value").size();
 		//println(faces);
@@ -31,9 +35,8 @@ public class ExtractFaces extends PApplet{
 			int height = jsonObject.getJSONArray("rows").getJSONObject(i).getJSONArray("value").getJSONObject(j).getInt("height");
 			
 			PImage face = image.get(x, y, width, height);
-			if (counter>589){
-			face.save(sketchPath+"/ouput/image"+String.format("%03d", counter)+".png");
-			}
+			
+			face.save(sketchPath+"/ouput/total_cbs/turk_image"+String.format("%04d", counter)+".png");
 			counter++;
 		}
 //		println("x:"+jsonObject.getJSONArray("rows").getJSONObject(i).getJSONArray("value").getJSONObject(0).getInt("x"));
