@@ -71,7 +71,7 @@ public class CVdraw extends PApplet{
 				text("No Images Found" , width/2-60, height/2);
 			} else {
 				FileNameExtensionFilter filter = new FileNameExtensionFilter("JPG PNG & TIFF Images", "jpg", "tiff", "png");
-				File thesisDir = new File("/Volumes/USB_Storage/thesis/dataface_corpus/");
+				File thesisDir = new File("/Volumes/My Book for Mac/thesis/dataface_corpus/");
 				fc.setFileFilter(filter);
 				fc.setCurrentDirectory(thesisDir);
 				int returnVal = fc.showOpenDialog(this); 

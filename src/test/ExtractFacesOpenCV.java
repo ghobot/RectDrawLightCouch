@@ -19,9 +19,17 @@ public class ExtractFacesOpenCV extends PApplet{
 		for(int i=0; i < rows.size(); i++){
 			println("url:"+jsonObject.getJSONArray("rows").getJSONObject(i).getString("key"));
 
+//			String url  = jsonObject.getJSONArray("rows").getJSONObject(i).getString("key");
+//			PImage image;
+//			image	= loadImage(url);
 			String url  = jsonObject.getJSONArray("rows").getJSONObject(i).getString("key");
-			PImage image;
-			image	= loadImage(url);
+			String[] urlArray= url.split("/");
+			String volume = "/Volumes/My Book for Mac/";
+			String nestedArchive = urlArray[3]+"/"+urlArray[4]+"/"+urlArray[5]+"/"+urlArray[6]+"/"+urlArray[7]+"/"+urlArray[8]+"/"+urlArray[9];
+			String fileLocation = volume + nestedArchive;
+			PImage image = loadImage(fileLocation);
+			
+			
 			
 			if (image != null) {
 			image.resize(1280, 720);
@@ -36,7 +44,7 @@ public class ExtractFacesOpenCV extends PApplet{
 
 			PImage face = image.get(x, y, width, height);
 
-			face.save(sketchPath+"/ouput/opencv/image_opencv_all_"+String.format("%04d", counter)+".png");
+			face.save(sketchPath+"/ouput/opencv_cbs_total/opencv_image_cbs_"+String.format("%04d", counter)+".png");
 
 			counter++;
 			}
